@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1781648812.33909 "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" "main.pdf" "main" 1781648812.51431 2
-  "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" 1781648812.09551 26284 ac271e2d0ea196b1ef1b1fe4a9f7739f ""
+["pdflatex"] 1781650426.42168 "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" "main.pdf" "main" 1781650426.5767 2
+  "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" 1781650426.16102 24023 6724314076cd367ce4925a39f078dadb ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmr12.tfm" 1775415801 1288 655e228510b4c2a1abe905c368440826 ""
   "/usr/share/texmf-dist/tex/generic/babel-portuges/brazilian.ldf" 1775415801 6096 b2165a3d4d5e10b4990e15cb0c21a9b0 ""
   "/usr/share/texmf-dist/tex/generic/babel/babel.sty" 1775415801 147019 f2ca437186bfeb562e1066ad59426a04 ""
@@ -32,8 +32,8 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1775415801 43569 fd570f2fa160877d211e859f687312ba ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1780255104 2329400 abc0078d2452c78f44d23aba15e4d3d9 ""
   "algorithm.sty" 0 -1 0 ""
-  "main.aux" 1781648804.33849 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
-  "main.tex" 1781648812.09551 26284 ac271e2d0ea196b1ef1b1fe4a9f7739f ""
+  "main.aux" 1781650418.42131 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "main.tex" 1781650426.16102 24023 6724314076cd367ce4925a39f078dadb ""
   "sbc-template.sty" 1776729775.42412 6394 325655c42666904a9e5e10b64122dd0d ""
   (generated)
   "main.aux"

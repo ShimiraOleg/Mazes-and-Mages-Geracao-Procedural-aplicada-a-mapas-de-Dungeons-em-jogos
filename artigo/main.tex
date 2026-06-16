@@ -159,19 +159,6 @@ uma \textbf{matriz de distâncias} euclidianas entre todas as salas, que será u
 quanto como informação heurística pelo ACO. Como tratamento de caso degenerado, quando há menos de três salas — situação em que
 não existe triângulo possível — as salas são simplesmente conectadas em cadeia.
  
-Ao término desta etapa, tem-se o grafo estrutural completo previsto na proposta: cada vértice representa uma sala e cada aresta
-ponderada representa um corredor potencial, com peso correspondente à distância espacial entre as salas conectadas. A
-Figura~\ref{fig:graph} ilustra um grafo gerado, com as salas representadas como círculos e as arestas de Delaunay como conexões
-candidatas.
- 
-\begin{figure}[htb]
-    \centering
-    % \includegraphics[width=0.8\textwidth]{figuras/grafo_delaunay.png}
-    \caption{Grafo estrutural da \textit{dungeon}: salas (vértices) conectadas pelas arestas candidatas da triangulação de Delaunay.}
-    \label{fig:graph}
-\end{figure}
- 
-% ---------------------------------------------------------------------
 \subsubsection{Geração dos Corredores}
 Definido o grafo de corredores potenciais, a segunda etapa seleciona quais dessas conexões efetivamente compõem o mapa final.
 Essa seleção é realizada pela classe \texttt{AntColonyOptimizer}, que implementa o algoritmo de Otimização por Colônia de
@@ -228,21 +215,6 @@ incorporam a taxa de evaporação $\rho$, conforme:
     \qquad \Delta\tau_{\text{global}} = \frac{1}{L_{\text{melhor}}}.
     \label{eq:pheromone}
 \end{equation}
- 
-Ao final da execução, o método \texttt{get\_corridor\_edges} retorna o conjunto de arestas da melhor solução, que constitui os
-corredores definitivos do mapa. De volta ao \texttt{DungeonGenerator}, a sala inicial é sorteada e a sala final é definida como a
-mais distante dela em linha reta, maximizando o percurso entre os extremos. Por fim, calculam-se as métricas estruturais sobre o
-\textit{layout} resultante — grau médio dos vértices, coeficiente de agrupamento médio e verificação da conectividade
-início--fim por busca em largura —, as mesmas métricas previstas para a avaliação comparativa. A Figura~\ref{fig:corridors}
-apresenta um mapa final, com os corredores selecionados destacados sobre as arestas candidatas de Delaunay.
- 
-\begin{figure}[htb]
-    \centering
-    % \includegraphics[width=0.8\textwidth]{figuras/corredores_aco.png}
-    \caption{\textit{Layout} final: em destaque, os corredores selecionados pelo ACO; em tom esmaecido, as arestas de Delaunay
-    descartadas. Em verde e vermelho, as salas inicial e final.}
-    \label{fig:corridors}
-\end{figure}
  
 % ---------------------------------------------------------------------
 \subsubsection{Parametrização}
@@ -339,17 +311,8 @@ interface dispõe de um \textbf{minimapa} (\texttt{MinimapView}), que renderiza 
 salas inicial e final e acompanha a posição do jogador em tempo real, atualizando-se sempre que este muda de casa. A interface
 ainda oferece atalhos de teclado para alternar a exibição do mapa e para regenerar instantaneamente uma nova \textit{dungeon}, o
 que facilita a inspeção visual de múltiplos mapas em sequência. Um painel textual exibe as métricas e os parâmetros da geração
-corrente, permitindo correlacionar diretamente a configuração utilizada com o mapa produzido. A Figura~\ref{fig:gameplay}
-apresenta o protótipo em execução.
+corrente, permitindo correlacionar diretamente a configuração utilizada com o mapa produzido.
  
-\begin{figure}[htb]
-    \centering
-    % \includegraphics[width=0.8\textwidth]{figuras/jogabilidade.png}
-    \caption{Protótipo \textit{Mazes \& Mages} em execução, com o ambiente tridimensional gerado proceduralmente e o minimapa.}
-    \label{fig:gameplay}
-\end{figure}
- 
-% ---------------------------------------------------------------------
 \subsubsection{Criação dos Mapas de Base}
 A avaliação proposta para este trabalho compara os mapas gerados proceduralmente com mapas de referência construídos manualmente.
 Para que essa comparação seja justa, ambos os conjuntos precisam ser representados sobre a mesma estrutura de grade. Essa
@@ -374,7 +337,6 @@ Essa equivalência de representação é o que viabiliza a avaliação comparati
 mesma estrutura de grade e percorríveis pelo mesmo conjunto de mecânicas, os mapas procedurais e os mapas de base podem ser
 medidos sob as mesmas métricas estruturais — grau médio dos vértices, coeficiente de agrupamento e conectividade entre a sala
 inicial e a final —, fornecendo um parâmetro objetivo para aferir a qualidade dos mapas gerados proceduralmente.
-
 
 
 \section{Resultados}
