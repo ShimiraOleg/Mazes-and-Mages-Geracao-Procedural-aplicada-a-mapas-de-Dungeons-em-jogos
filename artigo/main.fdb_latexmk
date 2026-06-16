@@ -1,14 +1,14 @@
 # Fdb version 4
-["bibtex main"] 1779818295.56618 "main.aux" "main.bbl" "main" 1780418421.19692 0
+["bibtex main"] 1779818295.56618 "main.aux" "main.bbl" "main" 1781551154.67859 0
   "./sbc-template.bib" 1774917634 725 bdc459d9953eda08f21705ef20e3b912 ""
   "./sbc.bst" 1774917634 21864 a668496cca21cfdd211f7fb5f0d57565 ""
-  "main.aux" 1780418421.15227 2340 ed7db2e5bd5552e5735d950da1a86c56 "pdflatex"
+  "main.aux" 1781551154.61177 2340 ed7db2e5bd5552e5735d950da1a86c56 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1780418420.96745 "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" "main.pdf" "main" 1780418421.19703 0
-  "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" 1780418420.80911 1628 052f70f6d030b27b5d707cec46612f3d ""
+["pdflatex"] 1781551154.20535 "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" "main.pdf" "main" 1781551154.67882 0
+  "/home/shimiraoleg/Desktop/Github/Mazes-and-Mages-Geracao-Procedural-aplicada-a-mapas-de-Dungeons-em-jogos/artigo/main.tex" 1781551153.94576 1865 15efa22c05d55d25d6eef36c641581ce ""
   "/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc" 1775415801 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1775415801 960 379cc0019370a9e0208a0a3f949f847a ""
   "/usr/share/texmf-dist/fonts/tfm/adobe/courier/pcrr8r.tfm" 1775415801 1292 bd42be2f344128bff6d35d98474adfe3 ""
@@ -19,6 +19,7 @@
   "/usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr7t.tfm" 1775415801 2124 2601a75482e9426d33db523edf23570a ""
   "/usr/share/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm" 1775415801 4408 25b74d011a4c66b7f212c0cc3c90061b ""
   "/usr/share/texmf-dist/fonts/tfm/adobe/times/ptmri7t.tfm" 1775415801 2288 f478fc8fed18759effb59f3dad7f3084 ""
+  "/usr/share/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm" 1775415801 4640 532ca3305aad10cc01d769f3f91f1029 ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmmi12.tfm" 1775415801 1524 4414a8315f39513458b80dfc63bff03a ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmmi6.tfm" 1775415801 1512 f21f83efb36853c0b70002322c1ab3ad ""
   "/usr/share/texmf-dist/fonts/tfm/public/cm/cmmi8.tfm" 1775415801 1520 eccf95517727cb11801f4f1aee3a21b4 ""
@@ -33,10 +34,12 @@
   "/usr/share/texmf-dist/fonts/type1/urw/times/utmb8a.pfb" 1775415801 44729 811d6c62865936705a31c797a1d5dada ""
   "/usr/share/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb" 1775415801 44656 0cbca70e0534538582128f6b54593cca ""
   "/usr/share/texmf-dist/fonts/type1/urw/times/utmr8a.pfb" 1775415801 46026 6dab18b61c907687b520c72847215a68 ""
+  "/usr/share/texmf-dist/fonts/type1/urw/times/utmri8a.pfb" 1775415801 45458 a3faba884469519614ca56ba5f6b1de1 ""
   "/usr/share/texmf-dist/fonts/vf/adobe/courier/pcrr7t.vf" 1775415801 1344 6ff472164bf9de0fb2e864b28ac156d9 ""
   "/usr/share/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf" 1775415801 1372 788387fea833ef5963f4c5bffe33eb89 ""
   "/usr/share/texmf-dist/fonts/vf/adobe/times/ptmbi7t.vf" 1775415801 1384 6ac0f8b839230f5d9389287365b243c0 ""
   "/usr/share/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf" 1775415801 1380 0ea3a3370054be6da6acd929ec569f06 ""
+  "/usr/share/texmf-dist/fonts/vf/adobe/times/ptmri7t.vf" 1775415801 1384 a9d8adaf491ce34e5fba99dc7bbe5f39 ""
   "/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1775415801 71627 94eb9990bed73c364d7f53f960cc8c5b ""
   "/usr/share/texmf-dist/tex/generic/babel-portuges/brazilian.ldf" 1775415801 6096 b2165a3d4d5e10b4990e15cb0c21a9b0 ""
   "/usr/share/texmf-dist/tex/generic/babel/babel.sty" 1775415801 147019 f2ca437186bfeb562e1066ad59426a04 ""
@@ -76,9 +79,9 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1775415801 43569 fd570f2fa160877d211e859f687312ba ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1780255112 325445 e037c2d0d08ad8cbac81cfa7969967b5 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1780255104 2329400 abc0078d2452c78f44d23aba15e4d3d9 ""
-  "main.aux" 1780418421.15227 2340 ed7db2e5bd5552e5735d950da1a86c56 "pdflatex"
+  "main.aux" 1781551154.61177 2340 ed7db2e5bd5552e5735d950da1a86c56 "pdflatex"
   "main.bbl" 1779818295.57622 49 0eba253fc001332e731e8aba3f23127b "bibtex main"
-  "main.tex" 1780418420.80911 1628 052f70f6d030b27b5d707cec46612f3d ""
+  "main.tex" 1781551153.94576 1865 15efa22c05d55d25d6eef36c641581ce ""
   "sbc-template.sty" 1776729775.42412 6394 325655c42666904a9e5e10b64122dd0d ""
   (generated)
   "main.aux"
