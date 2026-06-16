@@ -4,7 +4,24 @@
 \usepackage{graphicx,url}
 \usepackage[utf8]{inputenc}
 \usepackage[brazil]{babel}
-%\usepackage[latin1]{inputenc}  
+\usepackage[latin1]{inputenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{amsmath}
+\usepackage{xcolor}
+
+\lstdefinelanguage{GDScript}{
+  keywords={func,var,if,elif,else,for,while,return,break,continue,
+   in,range,class_name,extends,const,true,false,null,and,or,not},
+  sensitive=true, comment=[l]{\#},
+  morestring=[b]", morestring=[b]'}
+  \lstset{language=GDScript, basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue!70!black}, commentstyle=\color{gray},
+    numbers=left, numberstyle=\tiny, frame=single, breaklines=true,
+    captionpos=b}
+
 
      
 \sloppy
@@ -37,13 +54,18 @@ A industria brasileira de jogos digitais tem demonstrado um alto crescimento na 
 
 
 \section{Fundamentação Teórica}
-Essa sessão aborda o referencial teórico, com a intenção de fundamentar e contextualizar a presente pesquisa. Serão abordados
+Essa sessão aborda o referencial teórico, com a intenção de fundamentar e contextualizar a presente pesquisa. Serão abordados a geração 
+procedural e sua taxonomia, os elementos da teoria de grafos utilizados na modelagem do mapa junto a triangulação de Delaunay, a otimização
+por colônia de formigas, os elementos de \textit{game design} utilizados na elaboração dos mapas e, por fim, o funcionamento da /textit{game engine Godot.}
 
 \subsection{Geração Procedural}
+A geração procedural (\textit{Procedural Content Generation} - PCG) refere-se à criação de conteúdo por meio de algoritmos, tendo pouca ou nenhuma
+interferência humana \cite{}. Sua 
 
 \subsubsection{Grafos}
 
 \subsubsection{Algoritmo de Colônia de Formigas}
+O Algoritmo de colônia de formigas (\textit{Ant Colony Optimization} - ACO) é um algoritmo de otimização que se 
 
 \subsection{\textit{Game Design}}
 
@@ -53,24 +75,307 @@ Essa sessão aborda o referencial teórico, com a intenção de fundamentar e co
 Devido a sua utilização no desenvolvimento de jogos digitais, a maioria
 
 \section{Desenvolvimento}
-A presente sessão descreve todo o processo de desenvolvimento da aplicação,
-
+A presente sessão descreve todo o processo de desenvolvimento da aplicação, desde a arquitetura do \textit{framework} de geração
+até a integração com o protótipo jogável. Ela é dividida em duas subsessões: a primeira tem foco na lógica de geração, responsável
+por produzir a estrutura do mapa de forma independente da camada do jogo; e a segunda trata da prototipagem, na qual essa estrutura
+é consumida, rasterizada e convertida em um ambiente tridimensional explorável pelo jogador.
+ 
+Essa separação reflete uma decisão arquitetural deliberada: as classes responsáveis pela geração procedural
+(\texttt{GraphBuilder}, \texttt{AntColonyOptimizer} e \texttt{DungeonGenerator}) estendem \texttt{RefCounted} e não possuem
+qualquer dependência da árvore de cena, dos nós visuais ou do laço de jogo da \textit{engine}. O \textit{framework} comunica-se
+com a camada de jogo por meio de um único contrato de dados: um dicionário de resultado contendo as posições das salas, as arestas
+de Delaunay, as arestas selecionadas como corredores, os vértices de início e fim e as métricas estruturais calculadas. Essa
+fronteira bem definida permite que a lógica de geração seja testada, executada e avaliada isoladamente, ao mesmo tempo em que pode
+ser integrada a qualquer cena da \textit{engine} que respeite o formato do dicionário.
+ 
+% =====================================================================
 \subsection{Geração Procedural}
-A geração procedural de conteúdo (\textit{Procedural Content Generation} -- PCG)
-
+O processo de geração procedural é orquestrado pela classe \texttt{DungeonGenerator}, que coordena as duas etapas algorítmicas
+fundamentais descritas na proposta deste trabalho: a construção do grafo estrutural da \textit{dungeon} e a aplicação do algoritmo
+de Otimização por Colônia de Formigas (ACO) sobre esse grafo. O Algoritmo~\ref{alg:pipeline} resume essa orquestração.
+ 
+\begin{algorithm}
+\caption{Pipeline de geração procedural (\texttt{DungeonGenerator.generate})}
+\label{alg:pipeline}
+\begin{algorithmic}[1]
+\State inicializar gerador de números aleatórios a partir da \textit{seed}
+\State \textbf{gerar salas} respeitando a separação mínima \Comment{vértices}
+\State \textbf{construir grafo de Delaunay} sobre as salas \Comment{corredores potenciais}
+\State configurar e executar o \textbf{ACO} sobre o grafo
+\State $start \gets$ sala aleatória
+\State $end \gets$ sala mais distante de $start$
+\State $corredores \gets$ melhores arestas encontradas pelo ACO
+\State calcular métricas (grau médio, coeficiente de agrupamento, conectividade início--fim)
+\State \Return dicionário de resultado
+\end{algorithmic}
+\end{algorithm}
+ 
+Cada etapa é detalhada nas subseções seguintes. A primeira corresponde à definição dos vértices e das conexões candidatas do
+grafo; a segunda, à seleção, pelo ACO, do subconjunto de arestas que efetivamente compõem os corredores do mapa final; e a
+terceira descreve as variáveis de controle que parametrizam todo o processo.
+ 
+% ---------------------------------------------------------------------
 \subsubsection{Geração das Salas}
-
+A primeira etapa, implementada no método \texttt{generate\_rooms} da classe \texttt{GraphBuilder}, é responsável por posicionar as
+salas que constituem os vértices do grafo. O posicionamento utiliza uma estratégia de \textbf{amostragem por rejeição}: um ponto
+candidato é sorteado uniformemente dentro dos limites espaciais definidos pelo parâmetro \texttt{bounds} e só é aceito caso esteja
+a uma distância igual ou superior à separação mínima (\texttt{min\_separation}) de todas as salas já posicionadas. Caso contrário,
+o ponto é descartado e um novo candidato é sorteado.
+ 
+\begin{lstlisting}[caption={Amostragem por rejeição para o posicionamento das salas.}, label={lst:rooms}]
+while rooms.size() < room_count and attempts < max_attempts:
+    attempts += 1
+    var p := Vector2(
+        rng.randf_range(bounds.position.x, bounds.position.x + bounds.size.x),
+        rng.randf_range(bounds.position.y, bounds.position.y + bounds.size.y)
+    )
+    var ok: bool = true
+    for r in rooms:
+        if r.distance_to(p) < min_separation:
+            ok = false
+            break
+    if ok:
+        rooms.append(p)
+\end{lstlisting}
+ 
+Esse procedimento produz uma distribuição espacial próxima de um \textit{blue noise}, na qual as salas ficam razoavelmente
+espalhadas e nunca excessivamente próximas, evitando sobreposições e aglomerações artificiais. O número de tentativas é limitado
+a um múltiplo do número de salas desejado, de modo que a geração termina mesmo quando a densidade solicitada não pode ser
+plenamente satisfeita dentro dos limites disponíveis, garantindo a ausência de laços infinitos.
+ 
+Posicionadas as salas, é necessário definir quais delas podem ser conectadas por corredores. Para isso, o método
+\texttt{build\_delaunay\_graph} constrói uma \textbf{triangulação de Delaunay} sobre o conjunto de pontos, utilizando o algoritmo
+incremental de Bowyer--Watson~\cite{REF_DELAUNAY}. O algoritmo inicia com um \textit{super-triângulo} suficientemente grande para
+conter todos os pontos; cada sala é então inserida individualmente, removendo-se os triângulos cujo circuncírculo contém o ponto
+inserido e retriangulando-se a cavidade resultante. Ao final, descartam-se os triângulos que referenciam os vértices auxiliares do
+super-triângulo. O teste de pertencimento ao circuncírculo é feito por meio de um determinante, ajustado pela orientação dos
+vértices para garantir robustez numérica independentemente do sentido (horário ou anti-horário) em que o triângulo foi formado.
+ 
+A triangulação de Delaunay foi escolhida por gerar conexões planares, sem cruzamentos, ligando preferencialmente salas
+espacialmente próximas. Essa propriedade resulta em uma topologia natural para mapas, na qual cada sala se conecta a vizinhos
+imediatos, e fornece um conjunto enxuto e bem-comportado de \textbf{corredores potenciais}. As arestas extraídas dos triângulos
+são deduplicadas e armazenadas tanto em uma lista de arestas quanto em uma estrutura de adjacência. Paralelamente, é construída
+uma \textbf{matriz de distâncias} euclidianas entre todas as salas, que será utilizada posteriormente tanto como peso das arestas
+quanto como informação heurística pelo ACO. Como tratamento de caso degenerado, quando há menos de três salas — situação em que
+não existe triângulo possível — as salas são simplesmente conectadas em cadeia.
+ 
+Ao término desta etapa, tem-se o grafo estrutural completo previsto na proposta: cada vértice representa uma sala e cada aresta
+ponderada representa um corredor potencial, com peso correspondente à distância espacial entre as salas conectadas. A
+Figura~\ref{fig:graph} ilustra um grafo gerado, com as salas representadas como círculos e as arestas de Delaunay como conexões
+candidatas.
+ 
+\begin{figure}[htb]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{figuras/grafo_delaunay.png}
+    \caption{Grafo estrutural da \textit{dungeon}: salas (vértices) conectadas pelas arestas candidatas da triangulação de Delaunay.}
+    \label{fig:graph}
+\end{figure}
+ 
+% ---------------------------------------------------------------------
 \subsubsection{Geração dos Corredores}
-
+Definido o grafo de corredores potenciais, a segunda etapa seleciona quais dessas conexões efetivamente compõem o mapa final.
+Essa seleção é realizada pela classe \texttt{AntColonyOptimizer}, que implementa o algoritmo de Otimização por Colônia de
+Formigas~\cite{REF_ACO}. O ACO foi escolhido por construir soluções de forma probabilística e incremental, guiado simultaneamente
+por uma trilha de feromônio — que reforça as escolhas historicamente boas — e por uma informação heurística — que privilegia
+escolhas localmente vantajosas.
+ 
+Inicialmente, todas as arestas recebem um valor de feromônio igual ao parâmetro $\tau_0$. A cada iteração, um conjunto de formigas
+percorre o grafo de forma independente. Cada formiga parte de uma sala aleatória e constrói, de modo incremental, uma estrutura
+conexa que abrange as salas alcançáveis: a partir do conjunto de salas já visitadas, mantém-se uma fronteira de arestas candidatas
+(que ligam uma sala visitada a uma não visitada), e a cada passo uma aresta da fronteira é escolhida probabilisticamente. A
+probabilidade de seleção de uma aresta $(i,j)$ é proporcional a
+\begin{equation}
+    p_{ij} \;\propto\; \tau_{ij}^{\,\alpha}\,\cdot\,\eta_{ij}^{\,\beta},
+    \qquad \eta_{ij} = \frac{1}{d_{ij}},
+    \label{eq:aco}
+\end{equation}
+em que $\tau_{ij}$ é o feromônio depositado na aresta, $\eta_{ij}$ é a informação heurística (o inverso da distância euclidiana
+$d_{ij}$, favorecendo corredores curtos) e $\alpha$ e $\beta$ ponderam, respectivamente, a influência do feromônio e da heurística.
+Esse processo prossegue até que a fronteira se esgote, resultando em uma estrutura que conecta todas as salas do componente
+alcançado a partir da raiz. Por se tratar de uma estrutura geradora conexa, garante-se que exista um caminho entre quaisquer duas
+salas abrangidas, incluindo, em particular, a conectividade entre a sala inicial e a final exigida pela proposta.
+ 
+Uma estrutura puramente conexa, contudo, corresponderia a uma árvore, na qual existe um único caminho entre cada par de salas —
+um \textit{layout} pouco interessante do ponto de vista de jogabilidade, pois eliminaria rotas alternativas e ciclos. Para
+introduzir variedade estrutural, após a construção da estrutura conexa cada formiga adiciona um conjunto de \textbf{arestas de
+ciclo}: dentre as conexões de Delaunay ainda não utilizadas, seleciona-se probabilisticamente — pelo mesmo critério da
+Equação~\ref{eq:aco} — uma quantidade limitada por um orçamento proporcional ao tamanho da estrutura
+(\texttt{loop\_factor} $\times$ número de arestas). Essas arestas criam laços e caminhos alternativos, elevando o coeficiente de
+agrupamento do \textit{layout}.
+ 
+Cada solução construída é avaliada por uma função objetiva multicriterial que pondera a distância e o agrupamento. Sendo
+$\overline{d}$ a distância média das arestas do \textit{layout} e $C$ o seu coeficiente de agrupamento médio, o custo é definido
+como
+\begin{equation}
+    \text{custo} \;=\; w_{d}\,\overline{d} \;+\; w_{c}\,(1 - C)\,\overline{d},
+    \qquad
+    \textit{fitness} = \frac{1}{\text{custo}},
+    \label{eq:fitness}
+\end{equation}
+de forma que soluções com corredores mais curtos (menor $\overline{d}$) e com maior agrupamento (maior $C$) recebem maior
+\textit{fitness}. Os pesos $w_d$ (\texttt{w\_distance}) e $w_c$ (\texttt{w\_clustering}) permitem regular o equilíbrio entre
+economia de corredores e variedade topológica. A melhor solução é mantida segundo um critério lexicográfico: prioriza-se a
+\textbf{cobertura} (número de salas conectadas) e, em caso de empate, o maior \textit{fitness}, assegurando que o \textit{layout}
+final abranja o maior número possível de salas.
+ 
+O comportamento do feromônio segue o esquema clássico do ACO, com duas atualizações. A \textbf{atualização local} é aplicada a
+cada aresta percorrida por uma formiga, aproximando seu feromônio de $\tau_0$ e promovendo a diversificação das soluções
+exploradas. A \textbf{atualização global}, ao fim de cada iteração, reforça as arestas da melhor solução encontrada com um
+incremento inversamente proporcional ao seu comprimento total, intensificando a busca em torno das boas soluções. Ambas
+incorporam a taxa de evaporação $\rho$, conforme:
+\begin{equation}
+    \tau_{ij} \leftarrow (1-\rho)\,\tau_{ij} + \rho\,\Delta\tau,
+    \qquad \Delta\tau_{\text{global}} = \frac{1}{L_{\text{melhor}}}.
+    \label{eq:pheromone}
+\end{equation}
+ 
+Ao final da execução, o método \texttt{get\_corridor\_edges} retorna o conjunto de arestas da melhor solução, que constitui os
+corredores definitivos do mapa. De volta ao \texttt{DungeonGenerator}, a sala inicial é sorteada e a sala final é definida como a
+mais distante dela em linha reta, maximizando o percurso entre os extremos. Por fim, calculam-se as métricas estruturais sobre o
+\textit{layout} resultante — grau médio dos vértices, coeficiente de agrupamento médio e verificação da conectividade
+início--fim por busca em largura —, as mesmas métricas previstas para a avaliação comparativa. A Figura~\ref{fig:corridors}
+apresenta um mapa final, com os corredores selecionados destacados sobre as arestas candidatas de Delaunay.
+ 
+\begin{figure}[htb]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{figuras/corredores_aco.png}
+    \caption{\textit{Layout} final: em destaque, os corredores selecionados pelo ACO; em tom esmaecido, as arestas de Delaunay
+    descartadas. Em verde e vermelho, as salas inicial e final.}
+    \label{fig:corridors}
+\end{figure}
+ 
+% ---------------------------------------------------------------------
 \subsubsection{Parametrização}
-
+Conforme estabelecido na proposta, espera-se que os mapas sejam estruturalmente distintos em decorrência da manipulação de
+variáveis de controle. O \textit{framework} expõe, portanto, um conjunto abrangente de parâmetros que governam tanto a geometria
+das salas quanto o comportamento do ACO. Todos podem ser ajustados por meio do método \texttt{apply\_params}, que recebe um
+dicionário de configuração, desacoplando os valores da implementação. O Quadro~\ref{tab:params} relaciona os principais
+parâmetros e seus efeitos.
+ 
+\begin{table}[htb]
+\centering
+\caption{Parâmetros de controle do \textit{framework} de geração.}
+\label{tab:params}
+\begin{tabular}{p{0.26\textwidth} p{0.66\textwidth}}
+\hline
+\textbf{Parâmetro} & \textbf{Efeito} \\
+\hline
+\texttt{room\_count} & Número de salas (vértices) do grafo. \\
+\texttt{min\_separation} & Distância mínima entre salas; controla a densidade espacial. \\
+\texttt{seed} & Semente do gerador aleatório; garante reprodutibilidade. \\
+\texttt{max\_iterations} & Número de iterações do ACO. \\
+\texttt{ant\_count} & Número de formigas por iteração. \\
+$\alpha$ (\texttt{alpha}) & Peso da trilha de feromônio na escolha das arestas. \\
+$\beta$ (\texttt{beta}) & Peso da informação heurística (inverso da distância). \\
+$\rho$ (\texttt{rho}) & Taxa de evaporação do feromônio. \\
+$\tau_0$ (\texttt{tau\_0}) & Valor inicial de feromônio das arestas. \\
+$w_d$ (\texttt{w\_distance}) & Peso da distância média na função objetiva. \\
+$w_c$ (\texttt{w\_clustering}) & Peso do agrupamento na função objetiva. \\
+\texttt{loop\_factor} & Proporção de arestas de ciclo adicionadas ao \textit{layout}. \\
+\hline
+\end{tabular}
+\end{table}
+ 
+Os parâmetros podem ser fixados manualmente ou \textbf{aleatorizados} dentro de faixas configuráveis. Quando a aleatorização está
+ativa, cada parâmetro é sorteado entre um valor mínimo e máximo definidos previamente, de modo que cada geração produza um mapa
+com características distintas, ampliando a variedade do conjunto de resultados sem necessidade de ajuste manual. O parâmetro
+\texttt{seed} confere reprodutibilidade: fixada uma semente, todo o processo — posicionamento das salas, triangulação e execução
+do ACO — torna-se determinístico, o que é essencial tanto para a depuração quanto para a reprodução dos mapas durante a etapa de
+avaliação. Adicionalmente, os limites espaciais (\texttt{bounds}) são ajustados automaticamente em função do número de salas e da
+separação mínima, assegurando área suficiente para acomodar todas as salas solicitadas.
+ 
+% =====================================================================
 \subsection{Prototipagem}
-
+Esta subseção descreve a integração do \textit{framework} de geração a um protótipo de jogo desenvolvido na \textit{engine}
+Godot, com a linguagem GDScript. Enquanto a subseção anterior tratou da produção da estrutura lógica do mapa, esta aborda como
+essa estrutura é convertida em um ambiente tridimensional explorável, dotado de movimentação, detecção de colisão e renderização,
+conforme os objetivos definidos na proposta.
+ 
+% ---------------------------------------------------------------------
 \subsubsection{Conceitualização}
-
+O protótipo, intitulado \textit{Mazes \& Mages}, foi concebido como um jogo de RPG de exploração de masmorras em primeira pessoa,
+com navegação baseada em grade, inspirado em \textit{dungeon crawlers} clássicos do gênero. Nesse formato, o jogador se desloca
+casa a casa por um ambiente reticulado, o que se alinha naturalmente à representação em grade produzida pela geração procedural e
+torna a movimentação intrinsecamente compatível com a estrutura do mapa. O objetivo do jogador é simples e serve principalmente
+como validação da conectividade do mapa: partir da sala inicial e alcançar a sala final.
+ 
+A arquitetura da camada de jogo organiza-se em torno de alguns nós-chave. A cena \texttt{World} atua como orquestradora,
+integrando o \textit{framework} de geração ao mundo jogável: ela executa o gerador, converte o resultado em uma grade de células,
+instancia a geometria tridimensional, posiciona o jogador e atualiza a interface. A unidade básica de construção do ambiente é a
+classe \texttt{Cell}, um nó tridimensional que representa uma única casa do mapa, composta por seis faces (chão, teto e quatro
+paredes). Um arquivo de constantes globais (\texttt{Globals}) define o tamanho lógico da grade no mundo, garantindo coerência
+entre todos os sistemas que convertem coordenadas de grade em coordenadas de mundo.
+ 
+Um aspecto relevante de desempenho está no método \texttt{update\_faces} da classe \texttt{Cell}: ao instanciar cada célula, as
+faces compartilhadas entre células de chão adjacentes são removidas, de forma que apenas as paredes externas — aquelas voltadas
+para o vazio — sejam efetivamente renderizadas. Isso une visualmente salas e corredores contíguos em espaços contínuos e reduz a
+quantidade de geometria desenhada. Para fins de inspeção e depuração, foi também implementada uma visualização bidimensional em
+vista superior (\texttt{DungeonView}), que desenha as salas, as arestas de Delaunay e os corredores selecionados, permitindo
+observar diretamente a estrutura lógica do mapa antes de sua conversão para o espaço tridimensional.
+ 
+% ---------------------------------------------------------------------
 \subsubsection{Jogabilidade}
-
+A movimentação do jogador, implementada na classe \texttt{Player}, segue o paradigma de deslocamento discreto característico dos
+\textit{dungeon crawlers} em grade. Em vez de movimento contínuo, o jogador avança uma casa por vez e gira em incrementos de
+noventa graus. Um temporizador regula a cadência da entrada, processando uma ação de cada vez e impedindo que comandos se
+sobreponham enquanto uma transição está em andamento.
+ 
+A \textbf{detecção de colisão} é realizada por meio de quatro nós \texttt{RayCast3D}, orientados para frente, trás, esquerda e
+direita do jogador. Cada raio sonda a célula adjacente na respectiva direção: o deslocamento só é autorizado quando o raio detecta
+uma célula de chão à frente, ou seja, quando existe uma casa válida para a qual transitar. Dessa forma, o jogador fica confinado
+aos corredores e salas efetivamente gerados, sem atravessar paredes ou avançar para o vazio. Tanto o deslocamento quanto as
+rotações são animados por interpolação (\textit{tween}) suave, acompanhados de uma animação de passo, proporcionando uma
+transição fluida entre casas, apesar da natureza discreta do movimento.
+ 
+\begin{lstlisting}[caption={Trecho do processamento de movimento do jogador.}, label={lst:player}]
+if collision_check(ray_dir):
+    timerprocessor.stop()
+    tween_translation(get_direction(ray_dir))
+\end{lstlisting}
+ 
+A cena \texttt{World} é responsável por verificar, a cada quadro, a \textbf{condição de vitória}: quando a casa ocupada pelo
+jogador coincide com a casa da sala final, a cena de saída é carregada, encerrando a exploração. Para apoiar a navegação, a
+interface dispõe de um \textbf{minimapa} (\texttt{MinimapView}), que renderiza em vista superior as casas do mapa, destaca as
+salas inicial e final e acompanha a posição do jogador em tempo real, atualizando-se sempre que este muda de casa. A interface
+ainda oferece atalhos de teclado para alternar a exibição do mapa e para regenerar instantaneamente uma nova \textit{dungeon}, o
+que facilita a inspeção visual de múltiplos mapas em sequência. Um painel textual exibe as métricas e os parâmetros da geração
+corrente, permitindo correlacionar diretamente a configuração utilizada com o mapa produzido. A Figura~\ref{fig:gameplay}
+apresenta o protótipo em execução.
+ 
+\begin{figure}[htb]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{figuras/jogabilidade.png}
+    \caption{Protótipo \textit{Mazes \& Mages} em execução, com o ambiente tridimensional gerado proceduralmente e o minimapa.}
+    \label{fig:gameplay}
+\end{figure}
+ 
+% ---------------------------------------------------------------------
 \subsubsection{Criação dos Mapas de Base}
+A avaliação proposta para este trabalho compara os mapas gerados proceduralmente com mapas de referência construídos manualmente.
+Para que essa comparação seja justa, ambos os conjuntos precisam ser representados sobre a mesma estrutura de grade. Essa
+unificação é alcançada pela classe \texttt{GridRasterizer}, responsável por converter a saída abstrata da geração — posições
+contínuas das salas e lista de corredores — em uma grade discreta de casas.
+ 
+A rasterização ocorre em duas operações. Primeiro, o centro de cada sala é mapeado para uma coordenada de grade, e um bloco de
+casas de chão é escavado ao seu redor, com extensão controlada pelo parâmetro \texttt{room\_radius}. Em seguida, para cada corredor
+selecionado pelo ACO, escava-se um caminho em formato de "L" entre as casas das salas conectadas — primeiro no eixo horizontal e
+depois no vertical —, produzindo passagens ortogonais coerentes com a grade. O resultado é um dicionário que associa cada
+coordenada ao tipo de casa (chão, parede ou vazio), acompanhado das posições de início e fim, exatamente o formato consumido pela
+cena \texttt{World} para instanciar a geometria.
+ 
+Os \textbf{mapas de base}, por sua vez, são construídos manualmente pelo autor diretamente no editor da \textit{engine}, posicionando
+as células (\texttt{Cell}) à mão para compor a topologia desejada. A classe \texttt{ManualMap} cumpre, para esses mapas, o papel
+que a \texttt{World} desempenha para os procedurais: ela percorre recursivamente a árvore de cena, coleta todas as células
+posicionadas, deriva suas coordenadas de grade, executa a remoção de faces compartilhadas, posiciona o jogador na casa inicial e
+configura o minimapa. Como os mapas manuais reutilizam exatamente a mesma infraestrutura de células, jogador, minimapa e condição
+de vitória dos mapas procedurais, ambos tornam-se diretamente equiparáveis.
+ 
+Essa equivalência de representação é o que viabiliza a avaliação comparativa prevista na proposta: por estarem expressos sobre a
+mesma estrutura de grade e percorríveis pelo mesmo conjunto de mecânicas, os mapas procedurais e os mapas de base podem ser
+medidos sob as mesmas métricas estruturais — grau médio dos vértices, coeficiente de agrupamento e conectividade entre a sala
+inicial e a final —, fornecendo um parâmetro objetivo para aferir a qualidade dos mapas gerados proceduralmente.
+
+
 
 \section{Resultados}
 
